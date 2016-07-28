@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 install_requires = [
     'needle',
-    'paste'
+    'pasteDeploy'
 ]
 
 setup(name='stitching',

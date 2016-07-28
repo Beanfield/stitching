@@ -1,0 +1,1 @@
+from stitching.base import SeleniumRegressionTestCase

@@ -45,7 +45,7 @@ Relevant selenium config:
     display_keys = xs
     browser_keys = chrome_mobile
     make_baseline_screenshots = false
-    baseline_screenshot_dir = /tmp/screenshots
+    screenshot_dir = /tmp/screenshots
 
     [selenium:display_xs]
     width = 767
@@ -70,7 +70,7 @@ Config sections:
   * make_baseline_screenshots - Boolean indicating if the tests should be run
     to generate baseline screenshots. No assertions happen if this is set to
     true.
-  * baseline_screenshot_dir - Directory where baseline screenshots will be
+  * screenshot_dir - Directory where baseline screenshots will be
     saved/loaded to/from.
 
 * selenium:display_{key}
@@ -113,7 +113,7 @@ class SeleniumRegressionTestCase(unittest.TestCase):
     _APP_CONFIG_SECTION = 'myapp'
     _BASELINE_FOLDER_NAME = 'baseline'
     _ERROR_FOLDER_NAME = 'errors'
-    _CONFIG_FILE = 'test.ini'
+    _CONFIG_FILE = 'example.ini'
     _SELENIUM_CONFIG_BROWSER_PREFIX = 'browser_'
     _SELENIUM_CONFIG_DISPLAY_PREFIX = 'display_'
     _SELENIUM_CONFIG_SECTION = 'selenium'
@@ -156,7 +156,10 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             sleep(1)
             screenshot = element.get_screenshot()
 
-            baseline_path = self._make_screenshot_path(self._BASELINE_FOLDER_NAME)
+            baseline_path = self._make_screenshot_path(
+                self._BASELINE_FOLDER_NAME,
+                browser_name,
+                display_name)
 
             baseline_file = '{}/{}--{}.png'.format(
                 baseline_path,
@@ -176,7 +179,10 @@ class SeleniumRegressionTestCase(unittest.TestCase):
                 except IOError:
                     raise MissingBaselineScreenshotException
 
-                error_path = self._make_screenshot_path(self._ERROR_FOLDER_NAME)
+                error_path = self._make_screenshot_path(
+                    self._ERROR_FOLDER_NAME,
+                    browser_name,
+                    display_name)
 
                 if not os.path.exists(error_path):
                     os.makedirs(error_path)
@@ -249,11 +255,11 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             config.get(cls._SELENIUM_CONFIG_SECTION,
                        'make_baseline_screenshots'))
 
-        cls._make_browers(browser_keys)
-        cls._make_displays(display_keys)
+        cls._make_browers(browser_keys, config)
+        cls._make_displays(display_keys, config)
 
     @classmethod
-    def _make_browers(cls, browser_keys):
+    def _make_browers(cls, browser_keys, config):
         cls._browsers = {}
         for browser_key in browser_keys:
             section_name = '{}:{}{}'.format(
@@ -267,7 +273,7 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             cls._browsers[browser_key] = section_dict
 
     @classmethod
-    def _make_displays(cls, display_keys):
+    def _make_displays(cls, display_keys, config):
         cls._displays = {}
         for display_key in display_keys:
             section_name = '{}:{}{}'.format(
@@ -342,4 +348,4 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             yield display_name, browser_name, driver
 
     def test_demo(self):
-        self.assertScreenshot('nav', '/business')
+        self.assertScreenshot('#lst-ib', '/')
