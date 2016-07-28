@@ -156,11 +156,7 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             sleep(1)
             screenshot = element.get_screenshot()
 
-            baseline_path = '/'.join((
-                self._screenshot_dir,
-                self._BASELINE_FOLDER_NAME,
-                browser_name,
-                display_name))
+            baseline_path = self._make_screenshot_path(self._BASELINE_FOLDER_NAME)
 
             baseline_file = '{}/{}--{}.png'.format(
                 baseline_path,
@@ -180,11 +176,8 @@ class SeleniumRegressionTestCase(unittest.TestCase):
                 except IOError:
                     raise MissingBaselineScreenshotException
 
-                error_path = '/'.join((
-                    self._screenshot_dir,
-                    self._ERROR_FOLDER_NAME,
-                    browser_name,
-                    display_name))
+                error_path = self._make_screenshot_path(self._ERROR_FOLDER_NAME)
+
                 if not os.path.exists(error_path):
                     os.makedirs(error_path)
 
@@ -237,9 +230,6 @@ class SeleniumRegressionTestCase(unittest.TestCase):
         :param config: Config object.
         :type config: A SafeConfigParser instance.
         """
-        cls._browsers = {}
-        cls._displays = {}
-
         cls._command_executor = config.get(
             cls._SELENIUM_CONFIG_SECTION, 'command_executor')
         cls._base_url = config.get(
@@ -259,6 +249,26 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             config.get(cls._SELENIUM_CONFIG_SECTION,
                        'make_baseline_screenshots'))
 
+        cls._make_browers(browser_keys)
+        cls._make_displays(display_keys)
+
+    @classmethod
+    def _make_browers(cls, browser_keys):
+        cls._browsers = {}
+        for browser_key in browser_keys:
+            section_name = '{}:{}{}'.format(
+                cls._SELENIUM_CONFIG_SECTION,
+                cls._SELENIUM_CONFIG_BROWSER_PREFIX,
+                browser_key)
+
+            section_dict = dict(config.items(section_name))
+            section_dict['arguments'] = aslist(section_dict['arguments'])
+            section_dict['mobile'] = asbool(section_dict['mobile'])
+            cls._browsers[browser_key] = section_dict
+
+    @classmethod
+    def _make_displays(cls, display_keys):
+        cls._displays = {}
         for display_key in display_keys:
             section_name = '{}:{}{}'.format(
                 cls._SELENIUM_CONFIG_SECTION,
@@ -270,17 +280,6 @@ class SeleniumRegressionTestCase(unittest.TestCase):
             section_dict['height'] = int(section_dict['height'])
             section_dict['pixel_ratio'] = float(section_dict['pixel_ratio'])
             cls._displays[display_key] = section_dict
-
-        for browser_key in browser_keys:
-            section_name = '{}:{}{}'.format(
-                cls._SELENIUM_CONFIG_SECTION,
-                cls._SELENIUM_CONFIG_BROWSER_PREFIX,
-                browser_key)
-
-            section_dict = dict(config.items(section_name))
-            section_dict['arguments'] = aslist(section_dict['arguments'])
-            section_dict['mobile'] = asbool(section_dict['mobile'])
-            cls._browsers[browser_key] = section_dict
 
     def _make_url(self, path):
         """
